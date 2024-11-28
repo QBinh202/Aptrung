@@ -89,7 +89,8 @@
     }
 
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"></script>
 </head>
 <body>
   <div class="container">
@@ -126,27 +127,6 @@
       </div>
     </div>
 
-    <!-- Các chức năng điều khiển -->
-    <div class="controls">
-      <label for="modeSelect">Chọn chế độ:</label>
-      <select id="modeSelect" onchange="setMode()">
-        <option value="auto">Auto</option>
-        <option value="manual">Manual</option>
-      </select>
-      <div id="manualControls" style="display: none;">
-        <h3>Cài đặt Manual:</h3>
-        <label>Bật đèn lúc:</label>
-        <input type="time" id="lightOnTime"><br>
-        <label>Tắt đèn lúc:</label>
-        <input type="time" id="lightOffTime"><br>
-        <label>Bật quạt lúc:</label>
-        <input type="time" id="fanOnTime"><br>
-        <label>Tắt quạt lúc:</label>
-        <input type="time" id="fanOffTime"><br>
-        <button class="button" onclick="setManualSettings()">Lưu cài đặt</button>
-      </div>
-    </div>
-
     <!-- Bảng dữ liệu -->
     <table>
       <thead>
@@ -177,8 +157,29 @@
   </div>
 
   <script>
-    let temperatureData = [];
-    let humidityData = [];
+    // Firebase Config
+      // Import the functions you need from the SDKs you need
+  import { initializeApp } from "firebase/app";
+  import { getAnalytics } from "firebase/analytics";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAO9DwlXmmMIc0rJe1vkIg6fAEqMCVGQto",
+    authDomain: "aptrunggiacam-b8bed.firebaseapp.com",
+    databaseURL: "https://aptrunggiacam-b8bed-default-rtdb.firebaseio.com",
+    projectId: "aptrunggiacam-b8bed",
+    storageBucket: "aptrunggiacam-b8bed.firebasestorage.app",
+    messagingSenderId: "540655658083",
+    appId: "1:540655658083:web:57749d2fcbdca7d6d74456",
+    measurementId: "G-FN2438Z4TC"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
 
     function updateClock() {
       const now = new Date();
@@ -186,68 +187,32 @@
     }
     setInterval(updateClock, 1000);
 
-    function setMode() {
-      const mode = document.getElementById("modeSelect").value;
-      const manualControls = document.getElementById("manualControls");
-      if (mode === "auto") {
-        manualControls.style.display = "none";
-        socket.send("autoMode");
-      } else {
-        manualControls.style.display = "block";
-        socket.send("manualMode");
-      }
-    }
+    // Lấy dữ liệu từ Firebase
+    const ref = db.ref('Iotdata');
 
-    function setManualSettings() {
-      const lightOnTime = document.getElementById("lightOnTime").value;
-      const lightOffTime = document.getElementById("lightOffTime").value;
-      const fanOnTime = document.getElementById("fanOnTime").value;
-      const fanOffTime = document.getElementById("fanOffTime").value;
-      socket.send(`setLightOnTime:${lightOnTime}`);
-      socket.send(`setLightOffTime:${lightOffTime}`);
-      socket.send(`setFanOnTime:${fanOnTime}`);
-      socket.send(`setFanOffTime:${fanOffTime}`);
-    }
-
-    // Kết nối WebSocket
-    const socket = new WebSocket(`ws://${window.location.host}/ws`);
-    
-    socket.onopen = () => {
-      console.log('Kết nối WebSocket thành công!');
-    };
-    
-    socket.onclose = () => {
-      console.log('Kết nối WebSocket bị đóng!');
-    };
-    
-    socket.onerror = (error) => {
-      console.log('Lỗi WebSocket:', error);
-    };
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log(data); // Kiểm tra dữ liệu nhận được
+    ref.on('value', (snapshot) => {
+      const data = snapshot.val();
 
       // Cập nhật thông tin hiển thị
       document.getElementById("temperatureValue").innerText = `${data.temperature} °C`;
       document.getElementById("humidityValue").innerText = `${data.humidity} %`;
-      document.getElementById("lightStatus").innerText = data.relayLightState ? "Bật" : "Tắt";
-      document.getElementById("fanStatus").innerText = data.relayFanState ? "Bật" : "Tắt";
+      document.getElementById("lightStatus").innerText = data.light_status === "bật" ? "Bật" : "Tắt";
+      document.getElementById("fanStatus").innerText = data.fan_status === "bật" ? "Bật" : "Tắt";
       document.getElementById("modeStatus").innerText = data.mode;
 
       // Thêm dữ liệu vào bảng
       const newRow = `<tr>
-        <td>${data.time}</td>
+        <td>${new Date().toLocaleString()}</td>
         <td>${data.temperature} °C</td>
         <td>${data.humidity} %</td>
-        <td>${data.relayLightState ? "Bật" : "Tắt"}</td>
-        <td>${data.relayFanState ? "Bật" : "Tắt"}</td>
+        <td>${data.light_status === "bật" ? "Bật" : "Tắt"}</td>
+        <td>${data.fan_status === "bật" ? "Bật" : "Tắt"}</td>
         <td>${data.mode}</td>
       </tr>`;
       const table = document.getElementById("dataTable");
       table.insertAdjacentHTML("beforeend", newRow);
       if (table.rows.length > 20) table.deleteRow(0);
-    };
+    });
 
     function exportData() {
       fetch(`http://${window.location.host}/export`).then((response) => response.blob())
