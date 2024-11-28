@@ -1,0 +1,224 @@
+<!DOCTYPE HTML>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Ấp trứng gia cầm</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f9; margin: 0; padding: 0; }
+    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1 { background: #4CAF50; color: white; padding: 15px; border-radius: 5px; }
+    .controls { margin-top: 20px; }
+    .button { margin: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+    .button:hover { background-color: #45a049; }
+    select, input[type="time"] { padding: 8px; font-size: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #4CAF50; color: white; }
+    canvas { width: 100%; margin-top: 20px; }
+    
+    /* Đảm bảo hình ảnh nằm dưới tiêu đề */
+    .image-container { margin-top: 20px; }
+    .image-container img { width: 80%; max-width: 600px; border-radius: 10px; }
+    
+    /* Đặt vị trí nút Xuất Excel */
+    #exportBtnContainer {
+      margin-top: 20px;
+      position: relative;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Ấp trứng gia cầm</h1>
+    <div id="currentTime"></div>
+    
+    <!-- Hình con gà nằm dưới tiêu đề -->
+    <div class="image-container">
+      <img src="https://file.vnua.edu.vn/data/0/images/2021/03/03/host/ap-trung-ga.jpg?w=680" alt="Ảnh gà">
+    </div>
+
+    <!-- Biểu đồ nhiệt độ và độ ẩm -->
+    <canvas id="temperatureChart"></canvas>
+    <canvas id="humidityChart"></canvas>
+
+    <!-- Các chức năng điều khiển dưới biểu đồ -->
+    <div class="controls">
+      <label for="modeSelect">Chọn chế độ:</label>
+      <select id="modeSelect" onchange="setMode()">
+        <option value="auto">Auto</option>
+        <option value="manual">Manual</option>
+      </select>
+      <div id="manualControls" style="display: none;">
+        <h3>Cài đặt Manual:</h3>
+        <label>Bật đèn lúc:</label>
+        <input type="time" id="lightOnTime"><br>
+        <label>Tắt đèn lúc:</label>
+        <input type="time" id="lightOffTime"><br>
+        <label>Bật quạt lúc:</label>
+        <input type="time" id="fanOnTime"><br>
+        <label>Tắt quạt lúc:</label>
+        <input type="time" id="fanOffTime"><br>
+        <button class="button" onclick="setManualSettings()">Lưu cài đặt</button>
+      </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <table>
+      <thead>
+        <tr>
+          <th>Thời gian</th>
+          <th>Nhiệt độ (°C)</th>
+          <th>Độ ẩm (%)</th>
+          <th>Trạng thái đèn</th>
+          <th>Trạng thái quạt</th>
+          <th>Chế độ</th>
+        </tr>
+      </thead>
+      <tbody id="dataTable"></tbody>
+    </table>
+
+    <!-- Nút Xuất Excel -->
+    <div id="exportBtnContainer">
+      <button class="button" onclick="exportData()">Xuất Excel</button>
+    </div>
+  </div>
+
+  <script>
+    let temperatureData = [];
+    let humidityData = [];
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("currentTime").innerText = `Thời gian hiện tại: ${now.toLocaleString()}`;
+    }
+    setInterval(updateClock, 1000);
+
+    function setMode() {
+      const mode = document.getElementById("modeSelect").value;
+      const manualControls = document.getElementById("manualControls");
+      if (mode === "auto") {
+        manualControls.style.display = "none";
+        socket.send("autoMode");
+      } else {
+        manualControls.style.display = "block";
+        socket.send("manualMode");
+      }
+    }
+
+    function setManualSettings() {
+      const lightOnTime = document.getElementById("lightOnTime").value;
+      const lightOffTime = document.getElementById("lightOffTime").value;
+      const fanOnTime = document.getElementById("fanOnTime").value;
+      const fanOffTime = document.getElementById("fanOffTime").value;
+      socket.send(`setLightOnTime:${lightOnTime}`);
+      socket.send(`setLightOffTime:${lightOffTime}`);
+      socket.send(`setFanOnTime:${fanOnTime}`);
+      socket.send(`setFanOffTime:${fanOffTime}`);
+    }
+
+    // Kết nối WebSocket
+    const socket = new WebSocket(`ws://${window.location.host}/ws`);
+    
+    socket.onopen = () => {
+      console.log('Kết nối WebSocket thành công!');
+    };
+    
+    socket.onclose = () => {
+      console.log('Kết nối WebSocket bị đóng!');
+    };
+    
+    socket.onerror = (error) => {
+      console.log('Lỗi WebSocket:', error);
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log(data); // Kiểm tra dữ liệu nhận được
+
+      // Thêm dữ liệu vào bảng
+      const newRow = `<tr>
+        <td>${data.time}</td>
+        <td>${data.temperature} °C</td>
+        <td>${data.humidity} %</td>
+        <td>${data.relayLightState ? "Bật" : "Tắt"}</td>
+        <td>${data.relayFanState ? "Bật" : "Tắt"}</td>
+        <td>${data.mode}</td>
+      </tr>`;
+      const table = document.getElementById("dataTable");
+      table.insertAdjacentHTML("beforeend", newRow);
+      if (table.rows.length > 20) table.deleteRow(0);
+
+      // Cập nhật dữ liệu đồ thị
+      if (temperatureData.length > 10) temperatureData.shift();
+      if (humidityData.length > 10) humidityData.shift();
+
+      temperatureData.push(data.temperature);
+      humidityData.push(data.humidity);
+
+      updateCharts();
+    };
+
+    function updateCharts() {
+      // Cập nhật biểu đồ nhiệt độ
+      temperatureChart.data.labels = Array.from({ length: temperatureData.length }, (_, i) => i + 1);
+      temperatureChart.data.datasets[0].data = temperatureData;
+      temperatureChart.update();
+
+      // Cập nhật biểu đồ độ ẩm
+      humidityChart.data.labels = Array.from({ length: humidityData.length }, (_, i) => i + 1);
+      humidityChart.data.datasets[0].data = humidityData;
+      humidityChart.update();
+    }
+
+    const temperatureChart = new Chart(document.getElementById("temperatureChart"), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Nhiệt độ (°C)',
+          borderColor: '#FF5733',
+          fill: false,
+          data: [],
+        }],
+      },
+      options: {
+        scales: {
+          x: { beginAtZero: true },
+          y: { min: 0 },
+        },
+      },
+    });
+
+    const humidityChart = new Chart(document.getElementById("humidityChart"), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Độ ẩm (%)',
+          borderColor: '#33B5FF',
+          fill: false,
+          data: [],
+        }],
+      },
+      options: {
+        scales: {
+          x: { beginAtZero: true },
+          y: { min: 0, max: 100 },
+        },
+      },
+    });
+
+    function exportData() {
+      fetch(`http://${window.location.host}/export`).then((response) => response.blob())
+        .then((blob) => {
+          const fileURL = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = fileURL;
+          link.download = "data.csv";
+          link.click();
+        });
+    }
+  </script>
+</body>
+</html>
