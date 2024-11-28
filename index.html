@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -7,7 +7,7 @@
   <style>
     body { font-family: Arial, sans-serif; text-align: center; background-color: #e5fa06; margin: 0; padding: 0; }
     .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-    .ap {margin-bottom: 10px ;background: #4CAF50; color: white; padding: 15px; border-radius: 5px; }
+    .ap { margin-bottom: 10px; background: #4CAF50; color: white; padding: 15px; border-radius: 5px; }
     .controls { margin-top: 20px; }
     .button { margin: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
     .button:hover { background-color: #45a049; }
@@ -15,14 +15,12 @@
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; }
     th { background: #4CAF50; color: white; }
-    
     .status-box {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 20px;
       margin-top: 20px;
     }
-
     .status-card {
       background-color: #fff;
       border-radius: 10px;
@@ -31,28 +29,22 @@
       text-align: left;
       font-size: 18px;
     }
-
     .temperature-card { background-color: #ffcccb; }
     .humidity-card { background-color: #cce7ff; }
     .light-card { background-color: #eaffc7; }
     .fan-card { background-color: #ffe066; }
     .mode-card { background-color: #d3f8e2; }
-
     .status-card span { font-weight: bold; }
-
     .status-box .row {
       display: contents;
     }
-
     @media (max-width: 600px) {
       .status-box {
         grid-template-columns: 1fr;
       }
     }
-
     .image-container { margin-top: 20px; }
     .image-container img { width: 80%; max-width: 600px; border-radius: 10px; }
-
     .contact-info {
       position: fixed;
       bottom: 20px;
@@ -65,19 +57,16 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       width: 250px;
     }
-
     .contact-info h4 {
       margin: 0 0 5px 0;
       font-size: 16px;
       text-align: center;
     }
-
     .contact-info p {
       margin: 5px 0;
       text-align: center;
       font-size: 14px;
     }
-
     .contact-info a {
       color: #ffcc00;
       text-decoration: none;
@@ -85,9 +74,81 @@
     }
   </style>
 
-  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"></script>
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import các hàm cần thiết từ SDK Firebase
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js';
+
+    // Cấu hình Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAO9DwlXmmMIc0rJe1vkIg6fAEqMCVGQto",
+      authDomain: "aptrunggiacam-b8bed.firebaseapp.com",
+      databaseURL: "https://aptrunggiacam-b8bed-default-rtdb.firebaseio.com",
+      projectId: "aptrunggiacam-b8bed",
+      storageBucket: "aptrunggiacam-b8bed.firebasestorage.app",
+      messagingSenderId: "540655658083",
+      appId: "1:540655658083:web:eafd3a5af39b35c1d74456",
+      measurementId: "G-XDM6RM8M68"
+    };
+
+    // Khởi tạo Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Thêm chức năng cập nhật thời gian liên tục
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("currentTime").innerText = `Thời gian hiện tại: ${now.toLocaleString()}`;
+    }
+    setInterval(updateClock, 1000);
+
+    // Lấy dữ liệu từ Firebase Realtime Database
+    const iotDataRef = ref(database, 'Iotdata');
+
+    onValue(iotDataRef, (snapshot) => {
+      const data = snapshot.val();
+
+      if (data) {
+        // Cập nhật giá trị trong giao diện
+        document.getElementById("temperatureValue").innerText = `${data.temperature} °C`;
+        document.getElementById("humidityValue").innerText = `${data.humidity} %`;
+        document.getElementById("lightStatus").innerText = data.light_status === "bật" ? "Bật" : "Tắt";
+        document.getElementById("fanStatus").innerText = data.fan_status === "bật" ? "Bật" : "Tắt";
+        document.getElementById("modeStatus").innerText = data.mode;
+
+        // Thêm một dòng mới vào bảng với dữ liệu hiện tại
+        const newRow = `<tr>
+          <td>${new Date().toLocaleString()}</td>
+          <td>${data.temperature} °C</td>
+          <td>${data.humidity} %</td>
+          <td>${data.light_status === "bật" ? "Bật" : "Tắt"}</td>
+          <td>${data.fan_status === "bật" ? "Bật" : "Tắt"}</td>
+          <td>${data.mode}</td>
+        </tr>`;
+
+        const table = document.getElementById("dataTable");
+        table.insertAdjacentHTML("beforeend", newRow);
+
+        // Giới hạn số lượng dòng bảng tối đa (20 dòng)
+        if (table.rows.length > 20) table.deleteRow(0);
+      }
+    });
+
+    // Hàm xuất dữ liệu ra file Excel
+    function exportData() {
+      fetch(`http://${window.location.host}/export`).then((response) => response.blob())
+        .then((blob) => {
+          const fileURL = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = fileURL;
+          link.download = "dung_sinh.xlsx";
+          link.click();
+        });
+    }
+  </script>
 </head>
+
 <body>
   <div class="container">
     <div class="ap">
@@ -133,84 +194,15 @@
       <tbody id="dataTable"></tbody>
     </table>
 
-    <div id="exportBtnContainer">
-      <button class="button" onclick="exportData()">Xuất Excel</button>
+    <div class="controls">
+      <button class="button" onclick="exportData()">Xuất Dữ Liệu</button>
     </div>
   </div>
 
   <div class="contact-info">
-    <h4>Liên hệ:</h4>
-    <p>Email: <a href="mailto:21138091@gmail.com">21138091@gmail.com</a></p>
-    <p>Số điện thoại: <a href="tel:+0373197192">0373197192</a></p>
-    <p>Web phát triển bởi: <strong>Quốc Bình</strong></p>
+    <h4>Liên hệ</h4>
+    <p>Website: <a href="https://example.com" target="_blank">aptrunggiacam.com</a></p>
+    <p>Email: <a href="mailto:info@aptrunggiacam.com">info@aptrunggiacam.com</a></p>
   </div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAO9DwlXmmMIc0rJe1vkIg6fAEqMCVGQto",
-      authDomain: "aptrunggiacam-b8bed.firebaseapp.com",
-      databaseURL: "https://aptrunggiacam-b8bed-default-rtdb.firebaseio.com",
-      projectId: "aptrunggiacam-b8bed",
-      storageBucket: "aptrunggiacam-b8bed.firebasestorage.app",
-      messagingSenderId: "540655658083",
-      appId: "1:540655658083:web:57749d2fcbdca7d6d74456",
-      measurementId: "G-FN2438Z4TC"
-    };
-
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // Thêm chức năng cập nhật thời gian liên tục
-    function updateClock() {
-      const now = new Date();
-      document.getElementById("currentTime").innerText = `Thời gian hiện tại: ${now.toLocaleString()}`;
-    }
-    setInterval(updateClock, 1000);
-
-    // Lấy dữ liệu từ Firebase Realtime Database
-    const refIotData = db.ref('Iotdata');
-
-    refIotData.on('value', (snapshot) => {
-      const data = snapshot.val();
-
-      if (data) {
-        // Cập nhật giá trị trong giao diện
-        document.getElementById("temperatureValue").innerText = `${data.temperature} °C`;
-        document.getElementById("humidityValue").innerText = `${data.humidity} %`;
-        document.getElementById("lightStatus").innerText = data.light_status === "bật" ? "Bật" : "Tắt";
-        document.getElementById("fanStatus").innerText = data.fan_status === "bật" ? "Bật" : "Tắt";
-        document.getElementById("modeStatus").innerText = data.mode;
-
-        // Thêm một dòng mới vào bảng với dữ liệu hiện tại
-        const newRow = `<tr>
-          <td>${new Date().toLocaleString()}</td>
-          <td>${data.temperature} °C</td>
-          <td>${data.humidity} %</td>
-          <td>${data.light_status === "bật" ? "Bật" : "Tắt"}</td>
-          <td>${data.fan_status === "bật" ? "Bật" : "Tắt"}</td>
-          <td>${data.mode}</td>
-        </tr>`;
-
-        const table = document.getElementById("dataTable");
-        table.insertAdjacentHTML("beforeend", newRow);
-
-        // Giới hạn số lượng dòng bảng tối đa (20 dòng)
-        if (table.rows.length > 20) table.deleteRow(0);
-      }
-    });
-
-    // Hàm xuất dữ liệu ra file Excel (ví dụ, sử dụng API của backend để xuất dữ liệu)
-    function exportData() {
-      fetch(`http://${window.location.host}/export`).then((response) => response.blob())
-        .then((blob) => {
-          const fileURL = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = fileURL;
-          link.download = "dung_sinh.xlsx";
-          link.click();
-        });
-    }
-  </script>
 </body>
 </html>
