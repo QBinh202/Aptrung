@@ -157,26 +157,32 @@
       measurementId: "G-FN2438Z4TC"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
+    // Thêm chức năng cập nhật thời gian liên tục
     function updateClock() {
       const now = new Date();
       document.getElementById("currentTime").innerText = `Thời gian hiện tại: ${now.toLocaleString()}`;
     }
     setInterval(updateClock, 1000);
 
-    const refIotData = ref(db, 'Iotdata');
+    // Lấy dữ liệu từ Firebase Realtime Database
+    const refIotData = db.ref('Iotdata');
 
-    onValue(refIotData, (snapshot) => {
+    refIotData.on('value', (snapshot) => {
       const data = snapshot.val();
+
       if (data) {
+        // Cập nhật giá trị trong giao diện
         document.getElementById("temperatureValue").innerText = `${data.temperature} °C`;
         document.getElementById("humidityValue").innerText = `${data.humidity} %`;
         document.getElementById("lightStatus").innerText = data.light_status === "bật" ? "Bật" : "Tắt";
         document.getElementById("fanStatus").innerText = data.fan_status === "bật" ? "Bật" : "Tắt";
         document.getElementById("modeStatus").innerText = data.mode;
 
+        // Thêm một dòng mới vào bảng với dữ liệu hiện tại
         const newRow = `<tr>
           <td>${new Date().toLocaleString()}</td>
           <td>${data.temperature} °C</td>
@@ -189,10 +195,12 @@
         const table = document.getElementById("dataTable");
         table.insertAdjacentHTML("beforeend", newRow);
 
+        // Giới hạn số lượng dòng bảng tối đa (20 dòng)
         if (table.rows.length > 20) table.deleteRow(0);
       }
     });
 
+    // Hàm xuất dữ liệu ra file Excel (ví dụ, sử dụng API của backend để xuất dữ liệu)
     function exportData() {
       fetch(`http://${window.location.host}/export`).then((response) => response.blob())
         .then((blob) => {
