@@ -2,11 +2,12 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ấp trứng gia cầm</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f9; margin: 0; padding: 0; }
     .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-    .ap{background: #4CAF50; color: white; padding: 15px; border-radius: 5px; }
+    .ap { background: #4CAF50; color: white; padding: 15px; border-radius: 5px; }
     .controls { margin-top: 20px; }
     .button { margin: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
     .button:hover { background-color: #45a049; }
@@ -15,12 +16,8 @@
     th, td { border: 1px solid #ddd; padding: 8px; }
     th { background: #4CAF50; color: white; }
     canvas { width: 100%; margin-top: 20px; }
-    
-    /* Đảm bảo hình ảnh nằm dưới tiêu đề */
     .image-container { margin-top: 20px; }
     .image-container img { width: 80%; max-width: 600px; border-radius: 10px; }
-    
-    /* Đặt vị trí nút Xuất Excel */
     #exportBtnContainer {
       margin-top: 20px;
       position: relative;
@@ -35,7 +32,7 @@
       <h1>Ấp trứng gia cầm</h1>
     </div>
     <div id="currentTime"></div>
-    
+
     <!-- Hình con gà nằm dưới tiêu đề -->
     <div class="image-container">
       <img src="https://file.vnua.edu.vn/data/0/images/2021/03/03/host/ap-trung-ga.jpg?w=680" alt="Ảnh gà">
@@ -218,7 +215,7 @@
           const fileURL = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = fileURL;
-          link.download = "data.csv";
+          link.download = "dung_sinh.xlsx";
           link.click();
         });
     }
