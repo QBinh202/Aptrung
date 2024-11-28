@@ -15,9 +15,32 @@
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; }
     th { background: #4CAF50; color: white; }
-    .status-box { margin: 10px 0; }
-    .status-box div { margin: 5px 0; font-size: 18px; }
-    .status-box span { font-weight: bold; }
+    
+    /* Thiết kế ô vuông nổi */
+    .status-box {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .status-card {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: left;
+      font-size: 18px;
+    }
+
+    .temperature-card { background-color: #ffcccb; }
+    .humidity-card { background-color: #cce7ff; }
+    .light-card { background-color: #eaffc7; }
+    .fan-card { background-color: #ffe066; }
+    .mode-card { background-color: #d3f8e2; }
+
+    .status-card span { font-weight: bold; }
+    
     .image-container { margin-top: 20px; }
     .image-container img { width: 80%; max-width: 600px; border-radius: 10px; }
   </style>
@@ -26,8 +49,8 @@
 <body>
   <div class="container">
     <div class="ap">
-      <h1>Đồ Án IOT - DH21TD - QB - TH</h1>
-      <h2>Ấp trứng gia cầm</h2>
+      <h2>Đồ Án IOT - DH21TD - QB - TH</h2>
+      <h1>Ấp trứng gia cầm</h1>
     </div>
     <div id="currentTime"></div>
 
@@ -36,21 +59,21 @@
       <img src="https://file.vnua.edu.vn/data/0/images/2021/03/03/host/ap-trung-ga.jpg?w=680" alt="Ảnh gà">
     </div>
 
-    <!-- Hiển thị thông tin nhiệt độ, độ ẩm và trạng thái -->
+    <!-- Hiển thị thông tin nhiệt độ, độ ẩm và trạng thái trong các ô vuông nổi -->
     <div class="status-box">
-      <div> 
+      <div class="status-card temperature-card">
         <span>Nhiệt độ:</span> <span id="temperatureValue">-- °C</span>
       </div>
-      <div> 
+      <div class="status-card humidity-card">
         <span>Độ ẩm:</span> <span id="humidityValue">-- %</span>
       </div>
-      <div> 
+      <div class="status-card light-card">
         <span>Trạng thái đèn:</span> <span id="lightStatus">--</span>
       </div>
-      <div> 
+      <div class="status-card fan-card">
         <span>Trạng thái quạt:</span> <span id="fanStatus">--</span>
       </div>
-      <div> 
+      <div class="status-card mode-card">
         <span>Chế độ:</span> <span id="modeStatus">--</span>
       </div>
     </div>
