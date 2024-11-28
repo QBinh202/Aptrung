@@ -15,13 +15,11 @@
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; }
     th { background: #4CAF50; color: white; }
-    canvas { width: 100%; margin-top: 20px; }
+    .status-box { margin: 10px 0; }
+    .status-box div { margin: 5px 0; font-size: 18px; }
+    .status-box span { font-weight: bold; }
     .image-container { margin-top: 20px; }
     .image-container img { width: 80%; max-width: 600px; border-radius: 10px; }
-    #exportBtnContainer {
-      margin-top: 20px;
-      position: relative;
-    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -38,11 +36,26 @@
       <img src="https://file.vnua.edu.vn/data/0/images/2021/03/03/host/ap-trung-ga.jpg?w=680" alt="Ảnh gà">
     </div>
 
-    <!-- Biểu đồ nhiệt độ và độ ẩm -->
-    <canvas id="temperatureChart"></canvas>
-    <canvas id="humidityChart"></canvas>
+    <!-- Hiển thị thông tin nhiệt độ, độ ẩm và trạng thái -->
+    <div class="status-box">
+      <div> 
+        <span>Nhiệt độ:</span> <span id="temperatureValue">-- °C</span>
+      </div>
+      <div> 
+        <span>Độ ẩm:</span> <span id="humidityValue">-- %</span>
+      </div>
+      <div> 
+        <span>Trạng thái đèn:</span> <span id="lightStatus">--</span>
+      </div>
+      <div> 
+        <span>Trạng thái quạt:</span> <span id="fanStatus">--</span>
+      </div>
+      <div> 
+        <span>Chế độ:</span> <span id="modeStatus">--</span>
+      </div>
+    </div>
 
-    <!-- Các chức năng điều khiển dưới biểu đồ -->
+    <!-- Các chức năng điều khiển -->
     <div class="controls">
       <label for="modeSelect">Chọn chế độ:</label>
       <select id="modeSelect" onchange="setMode()">
@@ -136,6 +149,13 @@
       const data = JSON.parse(event.data);
       console.log(data); // Kiểm tra dữ liệu nhận được
 
+      // Cập nhật thông tin hiển thị
+      document.getElementById("temperatureValue").innerText = `${data.temperature} °C`;
+      document.getElementById("humidityValue").innerText = `${data.humidity} %`;
+      document.getElementById("lightStatus").innerText = data.relayLightState ? "Bật" : "Tắt";
+      document.getElementById("fanStatus").innerText = data.relayFanState ? "Bật" : "Tắt";
+      document.getElementById("modeStatus").innerText = data.mode;
+
       // Thêm dữ liệu vào bảng
       const newRow = `<tr>
         <td>${data.time}</td>
@@ -148,66 +168,7 @@
       const table = document.getElementById("dataTable");
       table.insertAdjacentHTML("beforeend", newRow);
       if (table.rows.length > 20) table.deleteRow(0);
-
-      // Cập nhật dữ liệu đồ thị
-      if (temperatureData.length > 10) temperatureData.shift();
-      if (humidityData.length > 10) humidityData.shift();
-
-      temperatureData.push(data.temperature);
-      humidityData.push(data.humidity);
-
-      updateCharts();
     };
-
-    function updateCharts() {
-      // Cập nhật biểu đồ nhiệt độ
-      temperatureChart.data.labels = Array.from({ length: temperatureData.length }, (_, i) => i + 1);
-      temperatureChart.data.datasets[0].data = temperatureData;
-      temperatureChart.update();
-
-      // Cập nhật biểu đồ độ ẩm
-      humidityChart.data.labels = Array.from({ length: humidityData.length }, (_, i) => i + 1);
-      humidityChart.data.datasets[0].data = humidityData;
-      humidityChart.update();
-    }
-
-    const temperatureChart = new Chart(document.getElementById("temperatureChart"), {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          label: 'Nhiệt độ (°C)',
-          borderColor: '#FF5733',
-          fill: false,
-          data: [],
-        }],
-      },
-      options: {
-        scales: {
-          x: { beginAtZero: true },
-          y: { min: 0 },
-        },
-      },
-    });
-
-    const humidityChart = new Chart(document.getElementById("humidityChart"), {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          label: 'Độ ẩm (%)',
-          borderColor: '#33B5FF',
-          fill: false,
-          data: [],
-        }],
-      },
-      options: {
-        scales: {
-          x: { beginAtZero: true },
-          y: { min: 0, max: 100 },
-        },
-      },
-    });
 
     function exportData() {
       fetch(`http://${window.location.host}/export`).then((response) => response.blob())
