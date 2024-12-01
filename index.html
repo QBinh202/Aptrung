@@ -3,18 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ấp trứng gia cầm</title>
+  <title>Ấp Trứng Gia Cầm</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; background-color: #e5fa06; margin: 0; padding: 0; }
     .container { max-width: 800px; margin: 0 auto; padding: 20px; }
     .ap { margin-bottom: 10px; background: #4CAF50; color: white; padding: 15px; border-radius: 5px; }
-    .controls { margin-top: 20px; }
+    .controls { margin-top: 20px; display: flex; justify-content: center; align-items: center; }
     .button { margin: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
     .button:hover { background-color: #45a049; }
     select, input[type="time"] { padding: 8px; font-size: 16px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #4CAF50; color: white; }
+    .manual-control-group { display: flex; justify-content: space-between; width: 100%; max-width: 600px; margin: 20px auto; }
+    .manual-control-group label, .manual-control-group input {
+      margin: 5px;
+      flex: 1;
+    }
     .status-box {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -72,14 +74,97 @@
       text-decoration: none;
       font-weight: bold;
     }
+    /* Hiển thị chế độ Test */
+    #testModeButton {
+      background-color: #ff6347; /* Màu đỏ cho chế độ Test */
+      color: white;
+      font-size: 16px;
+    }
+    #testModeButton:hover {
+      background-color: #e5533b;
+    }
   </style>
+</head>
+<body>
+
+  
+    <div class="container">
+        <div class="ap">
+          <h1>Đồ Án IOT - DH21TD - QB - TH</h1>
+          <h2>Ấp Trứng Gia Cầm</h2>
+        </div>
+    
+        <div id="currentTime"></div>
+    
+        <div class="image-container">
+          <img src="https://file.vnua.edu.vn/data/0/images/2021/03/03/host/ap-trung-ga.jpg?w=680" alt="Ảnh gà">
+        </div>
+    
+        <!-- Status Box -->
+        <div class="status-box">
+          <div class="status-card temperature-card">
+            <span>Nhiệt độ:</span> <span id="temperatureValue">-- °C</span>
+          </div>
+          <div class="status-card humidity-card">
+            <span>Độ ẩm:</span> <span id="humidityValue">-- %</span>
+          </div>
+          <div class="status-card light-card">
+            <span>Trạng thái đèn:</span> <span id="lightStatus">--</span>
+          </div>
+          <div class="status-card fan-card">
+            <span>Trạng thái quạt:</span> <span id="fanStatus">--</span>
+          </div>
+          <div class="status-card mode-card">
+            <span>Chế độ:</span> <span id="modeStatus">--</span>
+          </div>
+        </div>
+    
+        <!-- Menu điều khiển chế độ Manual -->
+        <div class="controls">
+          <button class="button" id="manualModeButton">Chuyển sang Manual</button>
+          <button class="button" id="autoModeButton">Chuyển sang Auto</button>
+          <button class="button" id="testModeButton">Chế độ Test</button> <!-- Thêm button Test -->
+        </div>
+    
+        <div id="manualControls" style="display:none;">
+          <h3>Chế độ Manual</h3>
+          <div class="manual-control-group">
+            <label for="fanTimeOn">Thời gian bật quạt (HH:MM):</label>
+            <input type="time" id="fanTimeOn">
+            <label for="lightTimeOn">Thời gian bật đèn (HH:MM):</label>
+            <input type="time" id="lightTimeOn">
+          </div>
+          <div class="manual-control-group">
+            <label for="fanTimeOff">Thời gian tắt quạt (HH:MM):</label>
+            <input type="time" id="fanTimeOff">
+            <label for="lightTimeOff">Thời gian tắt đèn (HH:MM):</label>
+            <input type="time" id="lightTimeOff">
+          </div>
+          <button class="button" id="sendManualCommand">Gửi lệnh</button>
+        </div>
+    
+        <!-- Chế độ Test -->
+        <div id="testControls" style="display:none;">
+          <h3>Chế độ Test</h3>
+          <button class="button" id="turnOnLight">Bật đèn</button>
+          <button class="button" id="turnOffLight">Tắt đèn</button>
+          <button class="button" id="turnOnFan">Bật quạt</button>
+          <button class="button" id="turnOffFan">Tắt quạt</button>
+        </div>
+      </div>
+    
+      <div class="contact-info">
+        <h4>Liên hệ </h4>
+        <p>Website: <a href="https://example.com" target="_blank">aptrunggiacam.com</a></p>
+        <p>Email: <a href="mailto:info@aptrunggiacam.com">info@aptrunggiacam.com</a></p>
+        <p>SĐT: <a href="tel:+0344456449">0344456449</a></p>
+      </div>
 
   <!-- Firebase SDK -->
   <script type="module">
-    // Import các hàm cần thiết từ SDK Firebase
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js';
-    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js';
-
+    import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js';
+  
     // Cấu hình Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAO9DwlXmmMIc0rJe1vkIg6fAEqMCVGQto",
@@ -91,118 +176,88 @@
       appId: "1:540655658083:web:eafd3a5af39b35c1d74456",
       measurementId: "G-XDM6RM8M68"
     };
-
+  
     // Khởi tạo Firebase
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
-
-    // Thêm chức năng cập nhật thời gian liên tục
+  
+    // Lấy dữ liệu từ Firebase Realtime Database
+    const iotDataRef = ref(database, 'Iotdata');
+  
+    // Hàm cập nhật thời gian hiện tại
     function updateClock() {
       const now = new Date();
       document.getElementById("currentTime").innerText = `Thời gian hiện tại: ${now.toLocaleString()}`;
     }
     setInterval(updateClock, 1000);
-
-    // Lấy dữ liệu từ Firebase Realtime Database
-    const iotDataRef = ref(database, 'Iotdata');
-
+  
+    // Lấy dữ liệu từ Firebase và cập nhật giao diện liên tục
     onValue(iotDataRef, (snapshot) => {
       const data = snapshot.val();
-
       if (data) {
         // Cập nhật giá trị trong giao diện
         document.getElementById("temperatureValue").innerText = `${data.temperature} °C`;
         document.getElementById("humidityValue").innerText = `${data.humidity} %`;
-        document.getElementById("lightStatus").innerText = data.light_status === "bật" ? "Bật" : "Tắt";
-        document.getElementById("fanStatus").innerText = data.fan_status === "bật" ? "Bật" : "Tắt";
-        document.getElementById("modeStatus").innerText = data.mode;
-
-        // Thêm một dòng mới vào bảng với dữ liệu hiện tại
-        const newRow = `<tr>
-          <td>${new Date().toLocaleString()}</td>
-          <td>${data.temperature} °C</td>
-          <td>${data.humidity} %</td>
-          <td>${data.light_status === "bật" ? "Bật" : "Tắt"}</td>
-          <td>${data.fan_status === "bật" ? "Bật" : "Tắt"}</td>
-          <td>${data.mode}</td>
-        </tr>`;
-
-        const table = document.getElementById("dataTable");
-        table.insertAdjacentHTML("beforeend", newRow);
-
-        // Giới hạn số lượng dòng bảng tối đa (20 dòng)
-        if (table.rows.length > 20) table.deleteRow(0);
+        document.getElementById("lightStatus").innerText = `${data.light_status}`;
+        document.getElementById("fanStatus").innerText = data.fan_status;
+        document.getElementById("modeStatus").innerText = data.mode ? 'Auto' : 'Manual';
       }
     });
 
-    // Hàm xuất dữ liệu ra file Excel
-    function exportData() {
-      fetch(`http://${window.location.host}/export`).then((response) => response.blob())
-        .then((blob) => {
-          const fileURL = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = fileURL;
-          link.download = "dung_sinh.xlsx";
-          link.click();
-        });
-    }
+    document.getElementById("testModeButton").addEventListener("click", () => {
+      document.getElementById("manualControls").style.display = "none";
+      document.getElementById("manualModeButton").style.display = "inline-block";
+      document.getElementById("autoModeButton").style.display = "none";
+      set(ref(database, 'DK/modeStatus'), 3);
+      document.getElementById("testControls").style.display = "block";
+    });
+    document.getElementById("turnOnLight").addEventListener("click", () => {
+      set(ref(database, 'DK/lightStatus'), true);
+    });
+    document.getElementById("turnOffLight").addEventListener("click", () => {
+      set(ref(database, 'DK/lightStatus'), false);
+    });
+    document.getElementById("turnOnFan").addEventListener("click", () => {
+      set(ref(database, 'DK/fanStatus'), true);
+    });
+    document.getElementById("turnOffFan").addEventListener("click", () => {
+      set(ref(database, 'DK/fanStatus'), false);
+    });
+    // Hàm chuyển chế độ sang Manual
+    document.getElementById("manualModeButton").addEventListener("click", () => {
+      document.getElementById("manualControls").style.display = "block";
+      document.getElementById("autoModeButton").style.display = "inline-block";
+      document.getElementById("manualModeButton").style.display = "none";
+      set(ref(database, 'DK/modeStatus'), false); // Chuyển sang manual
+    });
+  
+    // Hàm chuyển chế độ sang Auto
+    document.getElementById("autoModeButton").addEventListener("click", () => {
+      document.getElementById("manualControls").style.display = "none";
+      document.getElementById("manualModeButton").style.display = "inline-block";
+      document.getElementById("autoModeButton").style.display = "none";
+      set(ref(database, 'DK/modeStatus'), true); // Chuyển sang auto
+    });
+  
+    // Xử lý gửi lệnh bật/tắt quạt và đèn khi ở chế độ Manual
+    document.getElementById("sendManualCommand").addEventListener("click", () => {
+      // Lấy giá trị từ các input thời gian
+      const fanTimeOn = document.getElementById("fanTimeOn").value;
+      const lightTimeOn = document.getElementById("lightTimeOn").value;
+      const fanTimeOff = document.getElementById("fanTimeOff").value;
+      const lightTimeOff = document.getElementById("lightTimeOff").value;
+  
+      // Lưu các thời gian vào Firebase để theo dõi
+      set(ref(database, 'DK/fanTimeOn'), fanTimeOn);
+      set(ref(database, 'DK/lightTimeOn'), lightTimeOn);
+      set(ref(database, 'DK/fanTimeOff'), fanTimeOff);
+      set(ref(database, 'DK/lightTimeOff'), lightTimeOff);
+  
+      // Hiển thị thông báo thành công
+      alert("Lệnh đã được gửi! Quạt và đèn sẽ bật/tắt vào đúng thời gian đã cài đặt.");
+    });  
   </script>
-</head>
-
-<body>
-  <div class="container">
-    <div class="ap">
-      <h1>Đồ Án IOT - DH21TD - QB - TH</h1>
-      <h2>Ấp trứng gia cầm</h2>
-    </div>
-
-    <div id="currentTime"></div>
-
-    <div class="image-container">
-      <img src="https://file.vnua.edu.vn/data/0/images/2021/03/03/host/ap-trung-ga.jpg?w=680" alt="Ảnh gà">
-    </div>
-
-    <div class="status-box">
-      <div class="status-card temperature-card">
-        <span>Nhiệt độ:</span> <span id="temperatureValue">-- °C</span>
-      </div>
-      <div class="status-card humidity-card">
-        <span>Độ ẩm:</span> <span id="humidityValue">-- %</span>
-      </div>
-      <div class="status-card light-card">
-        <span>Trạng thái đèn:</span> <span id="lightStatus">--</span>
-      </div>
-      <div class="status-card fan-card">
-        <span>Trạng thái quạt:</span> <span id="fanStatus">--</span>
-      </div>
-      <div class="status-card mode-card">
-        <span>Chế độ:</span> <span id="modeStatus">--</span>
-      </div>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Thời gian</th>
-          <th>Nhiệt độ (°C)</th>
-          <th>Độ ẩm (%)</th>
-          <th>Trạng thái đèn</th>
-          <th>Trạng thái quạt</th>
-          <th>Chế độ</th>
-        </tr>
-      </thead>
-      <tbody id="dataTable"></tbody>
-    </table>
-
-    <div class="controls">
-      <button class="button" onclick="exportData()">Xuất Dữ Liệu</button>
-    </div>
-  </div>
-
-  <div class="contact-info">
-    <h4>Liên hệ</h4>
-    <p>Website: <a href="https://example.com" target="_blank">aptrunggiacam.com</a></p>
-    <p>Email: <a href="mailto:info@aptrunggiacam.com">info@aptrunggiacam.com</a></p>
-  </div>
+  
+  
 </body>
 </html>
